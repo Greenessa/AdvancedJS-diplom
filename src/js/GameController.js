@@ -19,7 +19,7 @@ export default class GameController {
     this.stateService = stateService;
     this.markedCellQuantity = 0; // счётчик выделенного персонажа игрока 
     this.markedInd = undefined;
-    this.markedPermitMove = 0; //   доступное количество клеток для хода выбранного персонажа
+    this.markedCharacter = undefined; //выбранный игроком персонаж
     this.gameState = new GameState();
     this.nameTypes = ['bowman', 'swordsman', 'magician'];
     this.playerTypes = [Bowman, Swordsman, Magician]; // доступные классы игрока
@@ -57,35 +57,57 @@ export default class GameController {
     const obj = this.gameState.positionedCharacter.find(
       (char) => char.position === index
     );
-    const objInd = this.gameState.positionedCharacter.findIndex(
-      (char) => char.position === index
-    );
+    
     if (obj) {
       console.log(this.nameTypes.includes(obj.character.type));
       if (!(this.nameTypes.includes(obj.character.type))) {
-      GamePlay.showError('Этот персонаж команды противника');
+        if (this.markedCellQuantity > 0) {
+          let possibilityAttackZoneArr=createPermitZoneArr(this.markedInd, this.gamePlay.boardsize, this.markedCharacter.possibilityAttack);
+          if (possibilityAttackZoneArr.includes(index)) {
+            this.gamePlay.setCursor(cursors.crosshair);
+            this.gamePlay.selectCell(index, 'red');
+            const opponentInd = this.gameState.positionedCharacter.findIndex(
+              (char) => char.position === index
+            );
+            this.gameState.positionedCharacter[opponentInd].character.health -= Math.max(this.markedCharacter.attack - obj.character.defence, this.markedCharacter.attack * 0.1);
+            if (this.gameState.positionedCharacter[opponentInd].character.health < 0) {
+              this.gameState.positionedCharacter.splice(opponentInd,1);
+              this.gamePlay.redrawPositions(this.gameState.positionedCharacter);
+            }
+            this.markedInd = undefined;
+            this.markedCharacter = undefined;
+            this.markedCellQuantity = 0;
+            his.gameState.nextStep = false;
+          }
+        } else {
+          GamePlay.showMessage('Этот персонаж команды противника');
+        }
       } else {
         if (this.markedCellQuantity === 0) {
         this.gamePlay.selectCell(index);
         this.markedCellQuantity++;
         this.markedInd = index;
-        this.markedPermitMove = obj.character.permitMove;
+        this.markedCharacter = obj.character;
         }
       }
     } else {
       if (this.markedCellQuantity > 0) {
-        console.log(this.markedPermitMove);
-        let permitZoneArr=createPermitZoneArr(index, this.gamePlay.boardsize, this.markedPermitMove);
+        let permitZoneArr=createPermitZoneArr(this.markedInd, this.gamePlay.boardsize, this.markedCharacter.permitMove);
         console.log(permitZoneArr);
         if (permitZoneArr.includes(index)) {
           this.gamePlay.setCursor(cursors.pointer);
           this.gamePlay.selectCell(index, 'green');
-          this.gameState.positionedCharacter[objInd].position = index;
+          // const newCellInd = this.gameState.positionedCharacter.findIndex(
+          //   (char) => char.position === index
+          // );
+          this.gameState.positionedCharacter[this.markedInd].position = index;
           this.gamePlay.redrawPositions(this.gameState.positionedCharacter);
           this.gamePlay.deselectCell(index);
           this.deselectCell(this.markedInd);
           this.markedInd = undefined;
-          this.GameState.nextStep = false;
+          this.markedCharacter = undefined;
+          this.markedCellQuantity = 0;
+          this.gameState.nextStep = false;
         }
       }
     }
