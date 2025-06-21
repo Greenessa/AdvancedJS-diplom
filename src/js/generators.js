@@ -1,6 +1,6 @@
 import Team from "./Team";
 import PositionedCharacter from "./PositionedCharacter";
-import GameState from "./GameState";
+
 
 /**
  * Формирует экземпляр персонажа из массива allowedTypes со
@@ -44,7 +44,7 @@ export function generateTeam(allowedTypes, maxLevel, characterCount) {
     const playerGenerator = characterGenerator(allowedTypes, maxLevel);
     let player = playerGenerator.next().value;
     teamGroup.push(player);
-  };
+  }
   return new Team(teamGroup);
 }
 

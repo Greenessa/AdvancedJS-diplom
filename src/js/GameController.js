@@ -69,7 +69,9 @@ export default class GameController {
             const opponentInd = this.gameState.positionedCharacter.findIndex(
               (char) => char.position === index
             );
-            this.gameState.positionedCharacter[opponentInd].character.health -= Math.max(this.markedCharacter.attack - obj.character.defence, this.markedCharacter.attack * 0.1);
+            let damage = Math.max(this.markedCharacter.attack - obj.character.defence, this.markedCharacter.attack * 0.1);
+            this.gamePlay.showDamage(index, damage);
+            this.gameState.positionedCharacter[opponentInd].character.health -= damage;
             if (this.gameState.positionedCharacter[opponentInd].character.health < 0) {
               this.gameState.positionedCharacter.splice(opponentInd,1);
               this.gamePlay.redrawPositions(this.gameState.positionedCharacter);
@@ -77,7 +79,7 @@ export default class GameController {
             this.markedInd = undefined;
             this.markedCharacter = undefined;
             this.markedCellQuantity = 0;
-            his.gameState.nextStep = false;
+            this.gameState.nextStep = false;
           }
         } else {
           GamePlay.showMessage('Этот персонаж команды противника');
