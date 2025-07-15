@@ -14,11 +14,11 @@ import PositionedCharacter from "./PositionedCharacter";
  */
 export function* characterGenerator(allowedTypes, maxLevel) {
   // TODO: write logic here
-  let level = Math.floor(Math.random() * (maxLevel - 1 + 1)) + 1;
+  // let level = Math.floor(Math.random() * (maxLevel - 1 + 1)) + 1;
   let iTypes = Math.floor(Math.random() * (2 - 0 + 1)) + 0;
   let nameClass = allowedTypes[iTypes];
   while (true) {
-    yield new nameClass(level);
+    yield new nameClass(maxLevel);
   }
 }
 

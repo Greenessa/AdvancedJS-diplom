@@ -68,7 +68,7 @@ export function calcHealthLevel(health) {
  * для размещения команды персонажей
  * @param flag - 1 - индексы для команды игрока, не 1 - команды соперника
  * @param boardSize - размер квадратного поля (в длину или ширину)
- * @param characterCount -кодличество персонажей в команде
+ * @param characterCount -количество персонажей в команде
  * @returns массив случайно выбранных индексов поля:
  * */
 export function calcIndexArray (boardSize, flag, characterCount) {
@@ -94,14 +94,122 @@ export function calcIndexArray (boardSize, flag, characterCount) {
   }}
   return randomIndexArr;
 }
+/**
+ * Формирует массив индексов поля, доступных для атаки выбранному персонажу
+ * @param index - индекс выбранного персонажа
+ * @param boardSize - размер квадратного поля (в длину или ширину)
+ * @param possibilityAttack - количествот доступных клеток для атаки для данного персонажа
+ * @returns массив индексов поля, доступных для атаки:
+ * */
+export function createAttackZoneArr (index, boardSize, possibilityAttack) {
+  let attackZoneArr = [];
+  let row = Math.trunc(index/boardSize);
+  let column = index%boardSize;
+  let iLeft = undefined;
+  let iStart = undefined;
+  let iFinish = undefined;
+  let iRight = undefined;
+  let iRightTop = undefined;
+  let qColumn = undefined;
+  if (column > possibilityAttack) {
+    iLeft = index - possibilityAttack;
+  } else {
+    iLeft = index - column;
+  }
+  if ((boardSize-1-column) <= possibilityAttack) {
+    iRight = index+boardSize-1-column;
+  } else {
+    iRight = index + possibilityAttack;
+  }
+  if (row > possibilityAttack) {
+    iStart = iLeft - possibilityAttack*boardSize;
+    iRightTop = iRight - possibilityAttack*boardSize;
+    
+  } else {
+    iStart = iLeft - row*boardSize;
+    iRightTop = iRight - row*boardSize;
+  }
 
+  qColumn = iRightTop - iStart;
+
+  if ((boardSize-1-row) <= possibilityAttack) {
+    iFinish = iRight + boardSize * (boardSize-1-row);
+  } else {
+    iFinish = iRight + possibilityAttack* boardSize;
+  }
+
+  for (let j = iStart; j < iFinish; j=j+boardSize) {
+    for (let i = j; i < (j+qColumn+1); i++) {
+     if (i != index) {
+      attackZoneArr.push(i);
+     }
+    }
+  }
+  return attackZoneArr;
+}
+/**
+ * Формирует массив индексов поля, доступных для перемещения выбранному персонажу
+* @param index - индекс выбранного персонажа
+* @param boardSize - размер квадратного поля (в длину или ширину)
+* @param permitMove - количествот доступных для перемещения клеток для данного персонажа
+* @returns массив индексов поля, доступных для перемещения:
+* */
 export function createPermitZoneArr (index, boardSize, permitMove) {
   let permitZoneArr = [];
-  let iStart = index-(permitMove*boardSize+permitMove);
-  for (let j = iStart; j < (iStart+boardSize*permitMove); j=j+boardSize) {
-    for (let i = j; i < (j+permitMove+1); i++) {
-    permitZoneArr.push[i];
-    }
+  let row = Math.trunc(index/boardSize);
+  let column = index%boardSize;
+  let iLeft = undefined;
+  let iRight = undefined;
+  let iTop = undefined;
+  let iBottom = undefined;
+  let iLeftTop = undefined;
+  let iLeftBottom = undefined;
+  let iRightTop = undefined;
+  let iRightBottom = undefined;
+  if (column > permitMove) {
+    iLeft = index - permitMove;
+  } else {
+    iLeft = index - column;
+  }
+  if ((boardSize-1-column) <= permitMove) {
+    iRight = index+boardSize-1-column;
+  } else {
+    iRight = index + permitMove;
+  }
+  for (let i = iLeft; i < (iRight+1); i++) {
+    if (i != index) {
+      permitZoneArr.push(i);
+     }
+  }
+  if (row > permitMove) {
+    iTop = index - boardSize*permitMove;
+  } else {
+    iTop = index - boardSize*row;
+  }
+  if ((boardSize-1-row) <= permitMove) {
+    iBottom = index + boardSize*(boardSize-1-row);
+  } else {
+    iBottom = index + boardSize*permitMove;
+  }
+  for (let i = iTop; i < (iBottom+1); i+=boardSize) {
+    if (i != index) {
+      permitZoneArr.push(i);
+     }
+  }
+  iLeftTop = index - (boardSize+1)* Math.min(column,row,permitMove);
+  iLeftBottom = index + (boardSize-1) * Math.min(column, (boardSize-1-row), permitMove);
+  iRightTop = index - (boardSize-1)*Math.min(row, (boardSize-1-column), permitMove);
+  iRightBottom = index + (boardSize+1) * Math.min((boardSize-1-row),(boardSize-1-column), permitMove);
+  for (let i = iLeftTop; i < (iRightBottom+1); i+=(boardSize+1)) {
+    if (i != index) {
+      permitZoneArr.push(i);
+     }
+  }
+  for (let i = iRightTop; i < (iLeftBottom+1); i+=(boardSize-1)) {
+    if (i != index) {
+      permitZoneArr.push(i);
+     }
   }
   return permitZoneArr;
 }
+
