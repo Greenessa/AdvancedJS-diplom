@@ -24,7 +24,9 @@ export default class GameController {
     this.gameState = new GameState();
     this.attackPosition = undefined;
     this.opponentObj = undefined;
-    this.teamCount = 3; 
+    this.flag = 1;
+    this.firstTeamCount = 3;
+    this.teamCount = this.firstTeamCount; 
     this.opponentTeamCount = this.teamCount;
     this.playerTeamCount = this.teamCount; 
     this.nameTypes = ['bowman', 'swordsman', 'magician'];
@@ -38,7 +40,7 @@ export default class GameController {
     // TODO: load saved stated from stateService
     
     this.gamePlay.drawUi(themes[this.gameState.level]);
-    if (this.gameState.level < 2) {
+    if (this.gameState.level < 2 && this.flag === 1) {
       let team = generateTeam(this.playerTypes, 1, this.teamCount);
       let randomIndexArr = calcIndexArray(this.gamePlay.boardSize, 1, this.teamCount);
       this.gameState.positionedCharacter = generatePositionedCharacter(team, randomIndexArr);
@@ -46,6 +48,7 @@ export default class GameController {
       let randomIndexArr2 = calcIndexArray(this.gamePlay.boardSize, 0, this.teamCount)
       let positions2 = generatePositionedCharacter(team2, randomIndexArr2);
       this.gameState.positionedCharacter.push(...positions2);
+      this.flag = 0;
     } else {
       let team2 = generateTeam(this.computerTypes, this.gameState.level, this.teamCount);
       let randomIndexArr2 = calcIndexArray(this.gamePlay.boardSize, 0, this.teamCount)
@@ -54,7 +57,7 @@ export default class GameController {
     }
     
     this.gamePlay.redrawPositions(this.gameState.positionedCharacter);
-    // console.log(this.gameState.positionedCharacter);
+    console.log('Персонажи на поле', this.gameState.positionedCharacter);
     this.markedCellQuantity = 0; // счётчик выделенного персонажа игрока 
     this.markedInd = undefined;
     this.markedCharacter = undefined;
@@ -96,7 +99,7 @@ export default class GameController {
             );
             console.log('атакованный противник', this.opponentObj)
             let damage = Math.max(this.markedCharacter.attack - obj.character.defence, this.markedCharacter.attack * 0.1);
-            this.gamePlay.showDamage(index, damage);
+            setTimeout(() => this.gamePlay.showDamage(index, damage), 500);
             this.gameState.positionedCharacter[opponentInd].character.health -= damage;
             if (this.gameState.positionedCharacter[opponentInd].character.health < 0) {
               this.gameState.positionedCharacter.splice(opponentInd,1);
@@ -105,7 +108,7 @@ export default class GameController {
               this.opponentObj = undefined;
               this.gamePlay.redrawPositions(this.gameState.positionedCharacter);
             }
-            setTimeout(this.gamePlay.deselectCell(index), 1000);
+            setTimeout(() => this.gamePlay.deselectCell(index), 500);
             this.gamePlay.deselectCell(this.markedInd);
             this.markedInd = undefined;
             this.markedCharacter = undefined;
@@ -116,9 +119,9 @@ export default class GameController {
             } else {
               this.gameState.level += 1;
               if (this.gameState.level > 4) {
-                this.cellClickListeners = [];
-                this.cellEnterListeners = [];
-                this.cellLeaveListeners = [];
+                this.gamePlay.cellClickListeners = [];
+                this.gamePlay.cellEnterListeners = [];
+                this.gamePlay.cellLeaveListeners = [];
                 return;
               }
               this.gameState.restTeamCount = this.gameState.positionedCharacter.length;
@@ -168,7 +171,8 @@ export default class GameController {
           this.gameState.positionedCharacter[newCellInd].position = index;
           // console.log('новая позиция персонажа', this.gameState.positionedCharacter[newCellInd].position);
           this.gamePlay.redrawPositions(this.gameState.positionedCharacter);
-          this.gamePlay.deselectCell(index);
+          // this.gamePlay.deselectCell(index);
+          setTimeout(() => this.gamePlay.deselectCell(index), 500);
           this.gamePlay.deselectCell(this.markedInd);
           this.markedInd = undefined;
           this.markedCharacter = undefined;
@@ -205,11 +209,27 @@ export default class GameController {
 
   addGameListeners() {
     this.gamePlay.addNewGameListener(this.onNewGame.bind(this));
-    // this.gamePlay.addSaveGameListener(this.onSaveGame.bind(this));
-    // this.gamePlay.addLoadGameListener(this.onLoadGame.bind(this));
+    this.gamePlay.addSaveGameListener(this.onSaveGame.bind(this));
+    this.gamePlay.addLoadGameListener(this.onLoadGame.bind(this));
    }
   onNewGame() {
+    this.flag = 1;
+    this.gameState.level = 1;
+    this.teamCount = this.firstTeamCount;
     this.init();
+  }
+
+  onSaveGame() {
+    this.stateService.save(this.gameState);
+    console.log(this.gameState);
+  }
+
+  onLoadGame() {
+    let obj = this.stateService.load();
+    this.gameState = GameState.from(obj);
+    console.log('Загруженное состояние игры', this.gameState);
+    this.gamePlay.drawUi(themes[this.gameState.level]);
+    this.gamePlay.redrawPositions(this.gameState.positionedCharacter);
   }
 
   computerStep () {
@@ -230,7 +250,7 @@ export default class GameController {
           this.gamePlay.setCursor(cursors.crosshair);
           this.gamePlay.selectCell(char.position, 'red');
           let damage = Math.max(compObj.character.attack - char.character.defence, compObj.character.attack * 0.1);
-          this.gamePlay.showDamage(char.position, damage);
+          setTimeout(() => this.gamePlay.showDamage(char.position, damage), 500);
           char.character.health -= damage;
             if (char.character.health < 0) {
               let i = this.gameState.positionedCharacter.findIndex((item) => item.character.health < 0);
@@ -241,9 +261,9 @@ export default class GameController {
             this.gamePlay.deselectCell(char.position);
             this.gamePlay.deselectCell(compObj.position);
             if (this.playerTeamCount < 1) {
-              this.cellClickListeners = [];
-              this.cellEnterListeners = [];
-              this.cellLeaveListeners = [];
+              this.gamePlay.cellClickListeners = [];
+              this.gamePlay.cellEnterListeners = [];
+              this.gamePlay.cellLeaveListeners = [];
             }
             return;
         }
